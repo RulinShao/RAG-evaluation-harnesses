@@ -273,6 +273,7 @@ def make_table(result_dict, column: str = "results", sort_results: bool = True, 
         "Version",
         "Filter",
         "n-shot",
+        "n-doc",
         "Metric",
         "",
         "Value",
@@ -295,6 +296,7 @@ def make_table(result_dict, column: str = "results", sort_results: bool = True, 
         dic = result_dict[column][k]
         version = result_dict["versions"].get(k, "N/A")
         n = str(result_dict["n-shot"][k])
+        n_doc = str(result_dict["n-doc"][k])
         higher_is_better = result_dict.get("higher_is_better", {}).get(k, {})
 
         if "alias" in dic:
@@ -315,9 +317,9 @@ def make_table(result_dict, column: str = "results", sort_results: bool = True, 
                 se = dic[m + "_stderr" + "," + f]
                 if se != "N/A":
                     se = "%.4f" % se
-                values.append([k, version, f, n, m, hib, "%.4f" % v, "±", se])
+                values.append([k, version, f, n, n_doc, m, hib, "%.4f" % v, "±", se])
             else:
-                values.append([k, version, f, n, m, hib, "%.4f" % v, "", ""])
+                values.append([k, version, f, n, n_doc, m, hib, "%.4f" % v, "", ""])
             k = ""
             version = ""
     md_writer.value_matrix = values

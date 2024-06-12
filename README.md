@@ -1,3 +1,24 @@
+# Retrieval Augmented Generation (RAG) Evaluation Harness
+Adapted From [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
+
+This repository supports RAG evaluation on all downstream tasks supported in lm-evaluation-harnesses as of Jun 10, 2024.
+
+## Installation
+```bash
+git clone https://github.com/RulinShao/rag-evaluation-harness.git
+cd rag-evaluation-harness
+conda create -n lm-eval python=3.11
+pip install -e .
+```
+We recomend using VLLMs to accelerate evaluation and support model parallelism. To use VLLMs, also install
+```bash
+pip install lm_eval[vllm]
+```
+
+## Basic Usage
+TODO
+
+
 # Language Model Evaluation Harness
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256836.svg)](https://doi.org/10.5281/zenodo.10256836)
