@@ -63,6 +63,20 @@ where `concat_k` specifies the number of documents that will be prepended in con
 
 Note: we use a simple prompt format for retrieval-augmented evaluation, where we prepend the retrieved documents before the input and few-shot examples in reverse order, i.e., `<DOC_k>...<DOC_0><FEWSHOT_m>...<FEWSHOT_0><QUESTION>`. Users can personalize their prompt format by modifying [this line](https://github.com/RulinShao/RAG-evaluation-harnesses/blob/main/lm_eval/evaluator.py#L500).
 
+## Q&A
+**Q: What tasks have been supported?**
+
+A: We refer to [this section](https://github.com/RulinShao/RAG-evaluation-harnesses#user-guide) to review the full list of tasks. We have benchmarked MMLU, TriviaQA, Natural Questions, MedQA, etc. with this repository with retrieval augmentations. If you run into issue with any other task, please fill an issue ticket and we will work on fixing it. 
+
+**Q: Can I add my new tasks conveniently?**
+
+A: Yes! Lm-evaluation-harnesses support convenient integration of new tasks. You can add new tasks with HF datasets by simply creating a configuration with a new task name in [this folder](https://github.com/RulinShao/RAG-evaluation-harnesses/tree/main/lm_eval/tasks). We welcome PRs to supplement more tasks for RAG evaluation.
+
+**Q: I got OOM when evaluation my model. What should I do?**
+
+A: If you are evaluating a large model, we recommend to use VLLM to turn on model parallelism. We refer to [this section](https://github.com/RulinShao/RAG-evaluation-harnesses/tree/main#tensor--data-parallel-and-optimized-inference-with-vllm) for more details.
+
+
 # Language Model Evaluation Harness
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10256836.svg)](https://doi.org/10.5281/zenodo.10256836)
