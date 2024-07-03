@@ -10,14 +10,58 @@ cd rag-evaluation-harness
 conda create -n lm-eval python=3.11
 pip install -e .
 ```
-We recomend using VLLMs to accelerate evaluation and support model parallelism. To use VLLMs, also install
+To use with VLLMs, also install
 ```bash
 pip install lm_eval[vllm]
 ```
 
 ## Basic Usage
-TODO
+We provide an example script to evaluate HuggingFace model with retrieval augmentation. Please refer to the below full documentation for LM-only evaluation and advanced usage.
 
+#### Step 1: Prepare retrieved documents.
+Users can easily obtain all evaluation inputs without few-shot demonstration, i.e., queries, by running
+```bash
+lm_eval --tasks "triviaqa" --inputs_save_dir "inputs" --save_inputs_only
+```
+This will save the inputs of TriviaQA in `inputs/triviaqa.jsonl` in a format of
+```json
+{"query": "Question: Who was the man behind The Chipmunks??\nAnswer:"}
+{"query": "Question: Which Lloyd Webber musical premiered in the US on 10th December 1993??\nAnswer:"}
+...
+```
+These inputs can be used as queries for retrieval.
+We assume retrieval is done offline before evaluation. Please save your retrieval augmentations in a jsonl file, in a format of
+```json
+{
+    "query": "Question: Who was the man behind The Chipmunks??\nAnswer:",
+    "ctxs": [
+        {"retrieval text": "Doc_0"},
+        {"retrieval text": "Doc_1"},
+        ...
+    ]
+}
+...
+```
+where `ctxs` is a list of retrieved documents from the most relevant to the least relevant that will be used for evaluation.
+
+#### Step 2: Evaluation.
+To run evaluation with the retrieved documents obatined at step 1:
+```bash
+MODEL_NAME_OR_PATH="meta-llama/Meta-Llama-3-8B"
+TASK="triviaqa"
+RETRIEVED_DOCS=/path/to/your/jsonl  # JSONL file obtained in Step 1
+
+lm_eval --model hf \
+    --model_args pretrained=$MODEL_NAME_OR_PATH \
+    --tasks $TASK \
+    --device cuda:0 \
+    --batch_size auto \
+    --retrieval_file $RETRIEVED_DOCS \
+    --concat_k 1
+```
+where `concat_k` specifies the number of documents that will be prepended in context when running evaluation. Set `concat_k=0` will degrade it to LM-only evaluation.
+
+Note: we use a simple prompt format for retrieval-augmented evaluation, where we prepend the retrieved documents before the input and few-shot examples in reverse order, i.e., `<DOC_k>...<DOC_0><FEWSHOT_m>...<FEWSHOT_0><QUESTION>`. Users can personalize their prompt format by modifying [this line](https://github.com/RulinShao/RAG-evaluation-harnesses/blob/main/lm_eval/evaluator.py#L500).
 
 # Language Model Evaluation Harness
 
