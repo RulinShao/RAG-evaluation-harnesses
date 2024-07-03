@@ -6,7 +6,7 @@ validation_split: validation
 description: "Answer these questions:\n\n"
 doc_to_text: "Q: {{question}}?\nA:"
 doc_to_target: "{{answer}}" # TODO: should be multi-target
-fewshot_delimiter: "\n"
+fewshot_delimiter: "\n\n"
 generation_kwargs:
   until:
     - "\n"

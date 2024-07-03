@@ -1270,7 +1270,7 @@ class HFLM(TemplateLM):
             cont = self._model_generate(
                 context=context_enc,
                 attention_mask=attn_masks,
-                stop=until,
+                stop=[eos], #until,
                 **kwargs,
             )
 
@@ -1287,7 +1287,13 @@ class HFLM(TemplateLM):
                     if len(term) > 0:
                         # ignore '' separator,
                         # for seq2seq case where self.tok_decode(self.eot_token_id) = ''
-                        s = s.split(term)[0]
+                        ss = s.split(term)
+                        s = ss[0]
+                        try:
+                            assert s  # in case the model will always generate a stop word first
+                        except:
+                            if len(ss) > 1:
+                                s = ss[1]
 
                 res.append(s)
 

@@ -445,7 +445,7 @@ def evaluate(
             with open(save_file, 'w') as fout:
                 for instance in task.instances:
                     prompt_end = instance.arguments[0]
-                    fout.write(json.dumps({'query': prompt_end}) + '\n')
+                    fout.write(json.dumps({'query': extract_question_from_fewshot_prompt(prompt_end)}) + '\n')
         
         # save answers for analysis
         if retrieval_args['answer_save_dir']:
@@ -488,7 +488,13 @@ def evaluate(
                 if query in hashed_retrieval_results:
                     prompt_retrieval = hashed_retrieval_results[query]
                 else:
-                    prompt_retrieval = hashed_retrieval_results[task._config.description + query]
+                    import sys
+                    if sys.stdin.isatty():
+                        import pdb; pdb.set_trace()
+                        continue
+                    else:
+                        raise RuntimeError
+                    # prompt_retrieval = hashed_retrieval_results[task._config.description + query]
 
                 
                 prompt = prompt_retrieval + prompt_end
