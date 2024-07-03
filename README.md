@@ -66,15 +66,15 @@ Note: we use a simple prompt format for retrieval-augmented evaluation, where we
 ## Q&A
 **Q: What tasks have been supported?**
 
-A: We refer to [this section](https://github.com/RulinShao/RAG-evaluation-harnesses#user-guide) to review the full list of tasks. We have benchmarked MMLU, TriviaQA, Natural Questions, MedQA, etc. with this repository with retrieval augmentations. If you run into issue with any other task, please fill an issue ticket and we will work on fixing it. 
+A: We refer to [this section](https://github.com/RulinShao/RAG-evaluation-harnesses#user-guide) to review a full list of supported tasks. We have benchmarked MMLU, TriviaQA, Natural Questions, MedQA, etc. with retrieval augmentations using this repository. If you run into issue with any other task, please file an issue ticket and we will work on it. 
 
-**Q: Can I add my new tasks conveniently?**
+**Q: Can I add new evaluation tasks?**
 
-A: Yes! Lm-evaluation-harnesses support convenient integration of new tasks. You can add new tasks with HF datasets by simply creating a configuration with a new task name in [this folder](https://github.com/RulinShao/RAG-evaluation-harnesses/tree/main/lm_eval/tasks). We welcome PRs to supplement more tasks for RAG evaluation.
+A: Yes! Lm-evaluation-harnesses support convenient integration of new tasks. You can add new tasks with HF datasets simply by defining a new configuration yaml file in [this folder](https://github.com/RulinShao/RAG-evaluation-harnesses/tree/main/lm_eval/tasks). We welcome PRs to supplement more tasks for RAG evaluation.
 
-**Q: I got OOM when evaluation my model. What should I do?**
+**Q: I got OOM, what should I do?**
 
-A: If you are evaluating a large model, we recommend to use VLLM to turn on model parallelism. We refer to [this section](https://github.com/RulinShao/RAG-evaluation-harnesses/tree/main#tensor--data-parallel-and-optimized-inference-with-vllm) for more details.
+A: If you are evaluating a large model, we recommend to use VLLM and turn on model parallelism. We refer to [this section](https://github.com/RulinShao/RAG-evaluation-harnesses/tree/main#tensor--data-parallel-and-optimized-inference-with-vllm) for more details.
 
 
 # Language Model Evaluation Harness
