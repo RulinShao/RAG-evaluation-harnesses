@@ -1,7 +1,10 @@
 # Retrieval Augmented Generation (RAG) Evaluation Harness
-Adapted From [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
-
+Adapted From [Language Model Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness).
 This repository supports RAG evaluation on all downstream tasks supported in lm-evaluation-harnesses as of Jun 10, 2024.
+
+This RAG evaluation suite is part of the project "Scaling Retrieval-Based Langauge Models with a Trillion-Token Datastore".
+
+[[Website](https://retrievalscaling.github.io)][[Paper](https://arxiv.org/abs/2407.12854)]
 
 ## Installation
 ```bash
@@ -541,6 +544,12 @@ Extras dependencies can be installed via `pip install -e ".[NAME]"`
 ## Cite as
 
 ```
+@article{shao2024scaling,
+  author = {Shao, Rulin and He, Jacqueline and Asai, Akari and Shi, Weijia and Dettmers, Tim and Min, Sewon and Zettlemoyer, Luke and Koh, Pang Wei},
+  title  = {Scaling Retrieval-Based Language Models with a Trillion-Token Datastore},
+  year   = {2024},
+}
+
 @misc{eval-harness,
   author       = {Gao, Leo and Tow, Jonathan and Abbasi, Baber and Biderman, Stella and Black, Sid and DiPofi, Anthony and Foster, Charles and Golding, Laurence and Hsu, Jeffrey and Le Noac'h, Alain and Li, Haonan and McDonell, Kyle and Muennighoff, Niklas and Ociepa, Chris and Phang, Jason and Reynolds, Laria and Schoelkopf, Hailey and Skowron, Aviya and Sutawika, Lintang and Tang, Eric and Thite, Anish and Wang, Ben and Wang, Kevin and Zou, Andy},
   title        = {A framework for few-shot language model evaluation},
