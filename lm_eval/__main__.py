@@ -258,7 +258,7 @@ def setup_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--inputs_save_dir",
         type=str,
-        default="lm-eval-data",
+        default="/home/rulin/data/lm-eval-data",
         help="Path to save the evaluation data as the queries for retrieval."
     )
     parser.add_argument(

@@ -487,14 +487,22 @@ def evaluate(
                 query = extract_question_from_fewshot_prompt(prompt_end)
                 if query in hashed_retrieval_results:
                     prompt_retrieval = hashed_retrieval_results[query]
+                elif task._config.description in query and query.replace(task._config.description, '') in hashed_retrieval_results:
+                    prompt_retrieval = hashed_retrieval_results[query.replace(task._config.description, '')]
+                elif task._config.description.replace('\n\n', '\n') in query and query.replace(task._config.description.replace('\n\n', '\n'), '') in hashed_retrieval_results:
+                    prompt_retrieval = hashed_retrieval_results[query.replace(task._config.description.replace('\n\n', '\n'), '')]
+                elif task._config.description + query in hashed_retrieval_results:
+                    prompt_retrieval = hashed_retrieval_results[task._config.description + query]
+                elif task._config.description.replace('\n\n', '\n') + query in hashed_retrieval_results:
+                    prompt_retrieval = hashed_retrieval_results[task._config.description.replace('\n\n', '\n') + query]
                 else:
                     import sys
                     if sys.stdin.isatty():
-                        import pdb; pdb.set_trace()
+                        if i == 0:
+                            import pdb; pdb.set_trace()
                         continue
                     else:
                         raise RuntimeError
-                    # prompt_retrieval = hashed_retrieval_results[task._config.description + query]
 
                 
                 prompt = prompt_retrieval + prompt_end
