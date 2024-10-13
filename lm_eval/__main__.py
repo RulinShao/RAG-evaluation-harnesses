@@ -302,6 +302,22 @@ def setup_parser() -> argparse.ArgumentParser:
         default="",
         help="An additional system prompt to prepend in the inputs."
     )
+    parser.add_argument(
+        "--brute_force_rag_eval",
+        action='store_true',
+        help="Run evaluate with every document brute force, take the best score."
+    )
+    parser.add_argument(
+        "--specified_document_id",
+        type=int,
+        default=None,
+        help="If specified, use the i-th document only for all examples."
+    )
+    parser.add_argument(
+        "--log_to_spreadsheet",
+        action='store_true',
+        help='The results will be automatically logged to Google spreadsheet. Check lm_eval/log.py for more details.'
+    )
     return parser
 
 
@@ -452,6 +468,8 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
             'retrieval_dir': args.retrieval_dir, 
             'concat_k': args.concat_k,
             'additional_system_prompt': args.additional_system_prompt,
+            'brute_force_rag_eval': args.brute_force_rag_eval,
+            'specified_document_id': args.specified_document_id,
             },
         **request_caching_args,
     )
@@ -505,6 +523,11 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         if args.wandb_args:
             # Tear down wandb run once all the logging is done.
             wandb_logger.run.finish()
+        
+        if args.log_to_spreadsheet:
+            from lm_eval.log import log_lm_eval_results
+            log_lm_eval_results(results)
+            
 
 
 if __name__ == "__main__":

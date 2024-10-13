@@ -5,6 +5,7 @@ import jsonlines
 import logging
 import random
 import time
+import copy
 from collections import defaultdict
 from typing import TYPE_CHECKING, List, Optional, Union
 
@@ -276,21 +277,41 @@ def simple_evaluate(
             chat_template=lm.chat_template if apply_chat_template else None,
         )
 
-    results = evaluate(
-        lm=lm,
-        task_dict=task_dict,
-        limit=limit,
-        cache_requests=cache_requests,
-        rewrite_requests_cache=rewrite_requests_cache,
-        bootstrap_iters=bootstrap_iters,
-        write_out=write_out,
-        log_samples=log_samples,
-        system_instruction=system_instruction,
-        apply_chat_template=apply_chat_template,
-        fewshot_as_multiturn=fewshot_as_multiturn,
-        verbosity=verbosity,
-        retrieval_args=retrieval_args,
-    )
+    if retrieval_args['brute_force_rag_eval']:
+        num_rounds = 3
+        for round in range(num_rounds):
+            retrieval_args.update({'round': round})
+            results = evaluate(
+                lm=lm,
+                task_dict=task_dict,
+                limit=limit,
+                cache_requests=cache_requests,
+                rewrite_requests_cache=rewrite_requests_cache,
+                bootstrap_iters=bootstrap_iters,
+                write_out=write_out,
+                log_samples=log_samples,
+                system_instruction=system_instruction,
+                apply_chat_template=apply_chat_template,
+                fewshot_as_multiturn=fewshot_as_multiturn,
+                verbosity=verbosity,
+                retrieval_args=retrieval_args,
+            )
+    else:
+        results = evaluate(
+            lm=lm,
+            task_dict=task_dict,
+            limit=limit,
+            cache_requests=cache_requests,
+            rewrite_requests_cache=rewrite_requests_cache,
+            bootstrap_iters=bootstrap_iters,
+            write_out=write_out,
+            log_samples=log_samples,
+            system_instruction=system_instruction,
+            apply_chat_template=apply_chat_template,
+            fewshot_as_multiturn=fewshot_as_multiturn,
+            verbosity=verbosity,
+            retrieval_args=retrieval_args,
+        )
 
     if lm.rank == 0:
         if isinstance(model, str):
@@ -391,10 +412,11 @@ def evaluate(
         ):
             raise ValueError("log_samples must be True for 'bypass' metric-only tasks")
     
+    brute_force_rag_eval = retrieval_args['brute_force_rag_eval']
     # hash the retrieval results first
     if retrieval_args['retrieval_file']:
         logging.info(f"Hashing the retrieval documents once for {len(eval_tasks)} tasks")
-        hashed_retrieval_results = hash_retrieval_results(retrieval_args['retrieval_file'], retrieval_args['concat_k'], None)
+        hashed_retrieval_results = hash_retrieval_results(retrieval_args['retrieval_file'], retrieval_args['concat_k'], None, specified_document_id=retrieval_args['specified_document_id'])
 
     for task_output in eval_tasks:
         task: Task = task_output.task
@@ -475,11 +497,11 @@ def evaluate(
         # prepend retrieved documents if any
         logging.info(f'Retrieval arguments: {retrieval_args}')
     
-        if retrieval_args['retrieval_file'] or retrieval_args['retrieval_dir']:
+        if not brute_force_rag_eval and (retrieval_args['retrieval_file'] or retrieval_args['retrieval_dir']):
             if retrieval_args['retrieval_dir']:
                 subtask_retrieval_file = f"{retrieval_args['retrieval_dir']}/{task_output.task_name}_retrieved_results.jsonl"
                 assert os.path.exists(subtask_retrieval_file),f"retrieval path does not exist: {subtask_retrieval_file}"
-                hashed_retrieval_results = hash_retrieval_results(subtask_retrieval_file, retrieval_args['concat_k'], task)
+                hashed_retrieval_results = hash_retrieval_results(subtask_retrieval_file, retrieval_args['concat_k'], task, specified_document_id=retrieval_args['specified_document_id'])
             #assert len(task.instances) == len(hashed_retrieval_results), f'length mismatch between task data ({len(task.instances)}) and retrieval data ({len(hashed_retrieval_results)})'
             
             for i, instance in enumerate(task.instances):
@@ -504,7 +526,6 @@ def evaluate(
                     else:
                         raise RuntimeError
 
-                
                 prompt = prompt_retrieval + prompt_end
                 if retrieval_args['additional_system_prompt']:
                     prompt = prompt_retrieval + '\n\n' + retrieval_args['additional_system_prompt'] + prompt
@@ -540,6 +561,9 @@ def evaluate(
 
     ### Run LM on inputs, get all outputs ###
     # execute each type of request
+    if brute_force_rag_eval:
+        retrieval_data = hash_retrieval_results(retrieval_args['retrieval_file'], hash_all=True)
+        
     for reqtype, reqs in requests.items():
         eval_logger.info(f"Running {reqtype} requests")
         # create `K` copies of each request `req` based off `K = req.repeats`
@@ -552,11 +576,33 @@ def evaluate(
                 cloned_reqs.extend([req] * req.repeats)
 
         # run requests through model
-        resps = getattr(lm, reqtype)(cloned_reqs)
+        if brute_force_rag_eval:
+            resps = []
+            all_local_reqs = []
+            num_documents = 100
+            for req in reqs:
+                prompt_end = req.arguments[0]
+                raw_query = extract_question_from_fewshot_prompt(prompt_end)
+                documents = retrieval_data[raw_query][:num_documents]
+                local_cloned_reqs = [copy.deepcopy(req) for _ in range(num_documents)]
+                for i in range(num_documents):
+                    prompt_retrieval = documents[i]
+                    new_prompt_end = prompt_retrieval + '\n\n' + retrieval_args['additional_system_prompt'] + prompt_end
+                    local_cloned_reqs[i].arguments = (new_prompt_end, *req.arguments[1:])
+                    
+                local_resps = getattr(lm, reqtype)(local_cloned_reqs)
+                resps.extend(local_resps)
+                # keep the resps that get the final answer right
+                # also need to note down all the gen results with different docs
+                for x, local_req in zip(local_resps, local_cloned_reqs):
+                    local_req.resps.append(x)
+                all_local_reqs.extend(local_cloned_reqs)
+        else:
+            resps = getattr(lm, reqtype)(cloned_reqs)
 
-        # put responses from model into a list of length K for each request.
-        for x, req in zip(resps, cloned_reqs):
-            req.resps.append(x)
+            # put responses from model into a list of length K for each request.
+            for x, req in zip(resps, cloned_reqs):
+                req.resps.append(x)
 
         if lm.world_size > 1:
             lm.accelerator.wait_for_everyone()
@@ -574,8 +620,12 @@ def evaluate(
         # TODO: make it possible to use a different metric per filter
         # Pre-process task.instances to group by doc_id
         instances_by_doc_id = defaultdict(list)
-        for instance in task.instances:
-            instances_by_doc_id[instance.doc_id].append(instance)
+        if brute_force_rag_eval:
+            for instance in all_local_reqs:
+                instances_by_doc_id[instance.doc_id].append(instance)
+        else:
+            for instance in task.instances:
+                instances_by_doc_id[instance.doc_id].append(instance)
         # Sort instances within each group
         for instances in instances_by_doc_id.values():
             instances.sort(key=lambda x: x.idx)
@@ -817,6 +867,8 @@ def hash_retrieval_results(
         test_jsonl_with_retrieval: str = "",
         concat_k: int = 1,
         task=None,
+        hash_all: bool = False,
+        specified_document_id: int = None,
     ):
         hashed_results = {}
         qa_data = load_jsonlines(test_jsonl_with_retrieval)
@@ -830,20 +882,26 @@ def hash_retrieval_results(
                 query = data['question']
                 raw_query = task._config.description + task.doc_to_text({'question': query}) 
 
-            k_ctx = ''
-            for i in range(concat_k):
+            if hash_all:
+                hashed_results[raw_query] = [data['ctxs'][i]["retrieval text"] for i in range(len(data['ctxs']))]
+            elif specified_document_id is not None:
+                ctx = data['ctxs'][specified_document_id]["retrieval text"]
+                hashed_results[raw_query] = ctx
+            else:
+                k_ctx = ''
+                for i in range(concat_k):
+                    try:
+                        # todo: unify the key name
+                        k_ctx = data['ctxs'][i]["retrieval text"] + k_ctx if "retrieval text" in data['ctxs'][i].keys() else data['ctxs'][i]["text"] + k_ctx
+                    except:
+                        print(f"No enough documents to prepend! Added {i} documents only.")
+                
                 try:
-                    # todo: unify the key name
-                    k_ctx = data['ctxs'][i]["retrieval text"] + k_ctx if "retrieval text" in data['ctxs'][i].keys() else data['ctxs'][i]["text"] + k_ctx
+                    assert raw_query not in hashed_results.keys() or k_ctx == hashed_results[raw_query]
                 except:
-                    print(f"No enough documents to prepend! Added {i} documents only.")
-            
-            try:
-                assert raw_query not in hashed_results.keys() or k_ctx == hashed_results[raw_query]
-            except:
-                print(f"\n\nMismatched:\nQuery:{raw_query}\nHashed Doc:{hashed_results[raw_query]}\nNew Doc:{k_ctx}")
-            #assert raw_query not in hashed_results, f'query already in hashed results: {raw_query}'
-            hashed_results[raw_query] = k_ctx
+                    print(f"\n\nMismatched:\nQuery:{raw_query}\nHashed Doc:{hashed_results[raw_query]}\nNew Doc:{k_ctx}")
+                #assert raw_query not in hashed_results, f'query already in hashed results: {raw_query}'
+                hashed_results[raw_query] = k_ctx
         return hashed_results
 
 
