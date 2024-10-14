@@ -518,13 +518,12 @@ def evaluate(
                 elif task._config.description.replace('\n\n', '\n') + query in hashed_retrieval_results:
                     prompt_retrieval = hashed_retrieval_results[task._config.description.replace('\n\n', '\n') + query]
                 else:
-                    import sys
-                    if sys.stdin.isatty():
-                        if i == 0:
-                            import pdb; pdb.set_trace()
-                        continue
-                    else:
-                        raise RuntimeError
+                    eval_logger.info(hashed_retrieval_results.keys())
+                    eval_logger.info('\n\n\Query: Not found\n\n\n')
+                    eval_logger.info(query)
+                    eval_logger.info(task._config.description.replace('\n\n', '\n') in query)
+                    eval_logger.info(query.replace(task._config.description.replace('\n\n', '\n'), ''))
+                    import pdb; pdb.set_trace()
 
                 prompt = prompt_retrieval + prompt_end
                 if retrieval_args['additional_system_prompt']:
@@ -554,6 +553,7 @@ def evaluate(
             # todo: may not account for padding in cases like SquadV2 which has multiple req types
             padding_requests[reqtype] += numpad
 
+    eval_logger.info('\n\n\nRulin\n\n\n')
     # Skip evaluation is save_inputs_only is True
     if retrieval_args['save_inputs_only']:
         logging.info("Skipping evaluation because save_inputs_only is set to True...")
@@ -564,6 +564,7 @@ def evaluate(
     if brute_force_rag_eval:
         retrieval_data = hash_retrieval_results(retrieval_args['retrieval_file'], hash_all=True)
         
+    eval_logger.info('\n\n\nRulin\n\n\n')
     for reqtype, reqs in requests.items():
         eval_logger.info(f"Running {reqtype} requests")
         # create `K` copies of each request `req` based off `K = req.repeats`
@@ -598,6 +599,7 @@ def evaluate(
                     local_req.resps.append(x)
                 all_local_reqs.extend(local_cloned_reqs)
         else:
+            eval_logger.info('\n\n\nRulin2\n\n\n')
             resps = getattr(lm, reqtype)(cloned_reqs)
 
             # put responses from model into a list of length K for each request.
