@@ -21,6 +21,8 @@ pip install lm_eval[vllm]
 ## Basic Usage
 We provide an example script to evaluate HuggingFace model with retrieval augmentation. Please refer to the below full documentation for LM-only evaluation and advanced usage.
 
+Note: to help people who want to quickly test of our evaluation repository without running search themselves, we provide the searched results from DPR-Wiki (a subset of MassiveDS) [here](https://huggingface.co/datasets/rulins/dpr_wiki_nq_open_searched_results) :)
+
 #### Step 1: Prepare retrieved documents.
 Users can easily obtain all evaluation inputs without few-shot demonstration, i.e., queries, by running
 ```bash
