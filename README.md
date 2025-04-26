@@ -6,6 +6,18 @@ This RAG evaluation suite is part of the project "Scaling Retrieval-Based Langau
 
 [[Website](https://retrievalscaling.github.io)][[Paper](https://arxiv.org/abs/2407.12854)]
 
+If you find our repository helpful, please cite
+```
+@article{shao2024scaling,
+  title={Scaling retrieval-based language models with a trillion-token datastore},
+  author={Shao, Rulin and He, Jacqueline and Asai, Akari and Shi, Weijia and Dettmers, Tim and Min, Sewon and Zettlemoyer, Luke and Koh, Pang Wei W},
+  journal={Advances in Neural Information Processing Systems},
+  volume={37},
+  pages={91260--91299},
+  year={2024}
+}
+```
+
 ## Installation
 ```bash
 git clone https://github.com/RulinShao/rag-evaluation-harness.git
@@ -547,9 +559,12 @@ Extras dependencies can be installed via `pip install -e ".[NAME]"`
 
 ```
 @article{shao2024scaling,
-  author = {Shao, Rulin and He, Jacqueline and Asai, Akari and Shi, Weijia and Dettmers, Tim and Min, Sewon and Zettlemoyer, Luke and Koh, Pang Wei},
-  title  = {Scaling Retrieval-Based Language Models with a Trillion-Token Datastore},
-  year   = {2024},
+  title={Scaling retrieval-based language models with a trillion-token datastore},
+  author={Shao, Rulin and He, Jacqueline and Asai, Akari and Shi, Weijia and Dettmers, Tim and Min, Sewon and Zettlemoyer, Luke and Koh, Pang Wei W},
+  journal={Advances in Neural Information Processing Systems},
+  volume={37},
+  pages={91260--91299},
+  year={2024}
 }
 
 @misc{eval-harness,
